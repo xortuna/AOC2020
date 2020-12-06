@@ -28,8 +28,6 @@ namespace Day5
                 }
                 Console.WriteLine($"Part 1: Highest seat: {highestSeat}");
 
-                foundSeats.Sort();
-
                 var mySeat = foundSeats.FirstOrDefault(t => !foundSeats.Contains(t + 1) && foundSeats.Contains(t + 2)) + 1;
 
                 Console.WriteLine($"Part 2: My seat: {mySeat}");
