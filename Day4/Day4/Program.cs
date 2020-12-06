@@ -1,10 +1,10 @@
-﻿using System;
+﻿#define PART2
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-#define PART2 1
 namespace Day4
 {
     class MinMaxValidator : IValidationRule
