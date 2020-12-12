@@ -141,7 +141,7 @@ namespace Day12
             }
 
             Console.WriteLine($"{p1Ship.x} {p1Ship.y} Part1: {Math.Abs(p1Ship.x) + Math.Abs(p1Ship.y)}");
-            Console.WriteLine($"{p2Ship.x} {p2Ship.y} Part1: {Math.Abs(p2Ship.x) + Math.Abs(p2Ship.y)}");
+            Console.WriteLine($"{p2Ship.x} {p2Ship.y} Part2: {Math.Abs(p2Ship.x) + Math.Abs(p2Ship.y)}");
             Console.ReadLine();
         }
     }
