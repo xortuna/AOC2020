@@ -23,12 +23,11 @@ namespace Day13
                 {
                     int increment = int.Parse(bus);
 
-                    var remainder = increment - (iTarget % increment);
-                    if (remainder == increment)
-                    {
+                    var remainder = increment - (iTarget % increment); //need to catch the 'next' bus - not the nearest bus, so calculate the shortest wait to next bus
+                    if (remainder == increment) //Fix for the above formula's edge case when a bus arrives at the right time
                         remainder = 0;
-                    }
-                    if (remainder < bestRemainder)
+
+                    if (remainder < bestRemainder)  //Calculate best time
                     {
                         bestRemainder = remainder;
                         bestBus = increment;
