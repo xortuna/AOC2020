@@ -12,17 +12,9 @@ namespace Day14
     {
         static void Main(string[] args)
         {
-            //BitArray br = new BitArray(36);
-            //br.
-
             ulong thirtySixBitMask = 68719476735;
             ulong currentMask = 0x00;    //1100
             ulong activeMask = 0x00; //0110 parts of the current mask to apply
-
-
-            //Add
-            //ulong value = 0x03;  //0011
-
 
             ulong[] ram = new ulong[100000];
             using(StreamReader sr = new StreamReader("puzzleinput.txt"))
@@ -32,7 +24,6 @@ namespace Day14
                 {
                     if(line.StartsWith("mask = "))
                     {
-                        //Load mask
                         foreach (var c in line.Substring("mask = ".Length))
                         {
                             activeMask = activeMask << 1;
@@ -79,17 +70,16 @@ namespace Day14
                 {
                     if (line.StartsWith("mask = "))
                     {
-                        //Load mask
                         foreach (var c in line.Substring("mask = ".Length))
                         {
                             floatingMask = floatingMask << 1;
-                            if (c == 'X')    //C# wont let me |= for some reason
+                            if (c == 'X')
                                 floatingMask |= 1;
-                            floatingMask = floatingMask & thirtySixBitMask; // trim
+                            floatingMask = floatingMask & thirtySixBitMask; // trim to 36bits
                             currentMask = currentMask << 1;
                             if (c == '1')
                                 currentMask |= 1;
-                            currentMask = currentMask & thirtySixBitMask; // trim
+                            currentMask = currentMask & thirtySixBitMask; // trim to 36bits
                         }
                     }
                     else if (line.StartsWith("mem["))
@@ -98,26 +88,16 @@ namespace Day14
                         ulong memoryIndex = ulong.Parse(line.Substring(4, eb - 4));
                         long value = long.Parse(line.Substring(eb + 4));
 
-
-
                         memoryIndex = memoryIndex | currentMask;
-
                         foreach(ulong memoryAddress in StartFindPermutations(memoryIndex, floatingMask))
                         {
                             var dictionaryKey = Convert.ToString((long)memoryAddress, 2);
                             ramP2[dictionaryKey] = value;
                         }
-
                     }
                 }
             }
-            long totalP2 = 0;
-            foreach (var l in ramP2)   //Linq Sum does not work with ulong :(
-                totalP2 += l.Value;
-
-            Console.WriteLine($"Part 2: {totalP2}");
-
-            Console.ReadLine();
+            Console.WriteLine($"Part 2: {ramP2.Sum(t => t.Value)}");
         }
 
         static IEnumerable<ulong> StartFindPermutations(ulong value, ulong mask)
@@ -150,6 +130,7 @@ namespace Day14
                     foreach (var p in FindPermutations(path2, mask, i))
                         yield return p;
                     isLastNode = false;
+                    break;
                 }
             }
             if(isLastNode)
