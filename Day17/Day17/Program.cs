@@ -41,7 +41,7 @@ namespace Day17
                         //Does this neighbor exist in our array, and can we affect it?
                         if (!Space.ContainsKey(neighbour))
                         {
-                            if (d.Value)    //(Dumass optimisation) This node cannot contribute to the neighbours so ignore it
+                            if (!cloned.ContainsKey(neighbour))    //(Dumass optimisation) This node cannot contribute to the neighbours so ignore it
                             {
                                 int subactive = 0;
                                 foreach (var subNeighbour in GetNeightbours(neighbour))
@@ -59,14 +59,9 @@ namespace Day17
                                 activeNeighbours++;
                         }
                     }
-                    if(d.Value)
-                    {
-                        if (activeNeighbours == 2 || activeNeighbours == 3)
-                            cloned[d.Key] = true;
-                    }
-                    else
-                        if(activeNeighbours == 3)
-                            cloned[d.Key] = true;
+                    if (activeNeighbours == 2 || activeNeighbours == 3)
+                        cloned[d.Key] = true;
+
                 }
                 Space = cloned;
 
@@ -103,7 +98,7 @@ namespace Day17
                         //Does this neighbor exist in our array, and can we affect it?
                         if (!Space.ContainsKey(neighbour))
                         {
-                            if (d.Value)    //(Dumass optimisation) This node cannot contribute to the neighbours so ignore it
+                            if (!cloned.ContainsKey(neighbour))    //(Dumass optimisation) This node cannot contribute to the neighbours so ignore it
                             {
                                 int subactive = 0;
                                 foreach (var subNeighbour in GetNeightbours4(neighbour))
@@ -121,14 +116,9 @@ namespace Day17
                                 activeNeighbours++;
                         }
                     }
-                    if (d.Value)
-                    {
-                        if (activeNeighbours == 2 || activeNeighbours == 3)
-                            cloned[d.Key] = true;
-                    }
-                    else
-                        if (activeNeighbours == 3)
-                            cloned[d.Key] = true;
+                    if (activeNeighbours == 2 || activeNeighbours == 3)
+                        cloned[d.Key] = true;
+                  
                 }
                 Space = cloned;
 
