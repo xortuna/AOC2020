@@ -9,7 +9,6 @@ namespace Day18
 {
     class Program
     {
-
         enum Operator
         {
             None,
@@ -25,41 +24,89 @@ namespace Day18
 
         static void Main(string[] args)
         {
-            long part1Total = 0;
-            using (StreamReader sr = new StreamReader("puzzleinput.txt"))
-            {
-                string line;
-                while((line = sr.ReadLine()) != null)
-                {
-                    part1Total += CalculateString(line);
-                }
-            }
+            long part1Total = File.ReadLines("puzzleinput.txt").Sum(t => EvaulateString(t));
             Console.WriteLine($"Part 1: {part1Total}");
 
-            long part2Total = 0;
-            using (StreamReader sr = new StreamReader("puzzleinput.txt"))
+            long part2Total = File.ReadLines("puzzleinput.txt").Sum(t => EvaulateString(Reprecedence(t)));
+            Console.WriteLine($"Part 2: {part2Total}");
+        }
+
+        static long EvaulateString(string input)
+        {
+            StringBuilder builder = new StringBuilder();
+            Stack<OperationStack> depth = new Stack<OperationStack>();
+            long cache = 0;
+            Operator currentOperator = Operator.Set;
+            foreach (var c in input)
             {
-                string line;
-                while ((line = sr.ReadLine()) != null)
+                if (char.IsNumber(c))
+                    builder.Append(c);
+                else if (c == '+')
                 {
-                    line = Reprecedence(line);
-                    part2Total += CalculateString(line);
+                    ApplyOperator(ref cache, builder.ToString(), currentOperator);
+                    currentOperator = Operator.Add;
+                    builder.Clear();
+                }
+                else if (c == '*')
+                {
+                    ApplyOperator(ref cache, builder.ToString(), currentOperator);
+                    currentOperator = Operator.Multiply;
+                    builder.Clear();
+                }
+                else if (c == '(')
+                {
+                    depth.Push(new OperationStack { lhs = cache, oper = currentOperator });
+                    currentOperator = Operator.Set;
+                    cache = 0;
+                    builder.Clear();
+                }
+                else if (c == ')')
+                {
+                    ApplyOperator(ref cache, builder.ToString(), currentOperator);
+                    var toRestore = depth.Pop();
+                    switch (toRestore.oper)
+                    {
+                        case Operator.Add:
+                            cache = toRestore.lhs + cache;
+                            break;
+                        case Operator.Multiply:
+                            cache = toRestore.lhs * cache;
+                            break;
+                    }
+                    currentOperator = Operator.None;
+                    builder.Clear();
                 }
             }
-            Console.WriteLine($"Part 2: {part2Total}");
-
-            Console.ReadLine();
+            ApplyOperator(ref cache, builder.ToString(), currentOperator);
+            return cache;
         }
+
+        static void ApplyOperator(ref long cache, string currentString, Operator operation)
+        {
+            switch (operation)
+            {
+                case Operator.Set:
+                    cache = long.Parse(currentString);
+                    break;
+                case Operator.Add:
+                    cache += long.Parse(currentString);
+                    break;
+                case Operator.Multiply:
+                    cache *= long.Parse(currentString);
+                    break;
+            }
+        }
+
         static string Reprecedence(string input)
         {
-            for(int i=0; i < input.Length; ++i)
+            for (int i = 0; i < input.Length; ++i)
             {
-                if(input[i] == '+')
+                if (input[i] == '+')
                 {
                     //seek left
                     int commaCache = 0;
                     int l = i - 2;
-                    for(; l >= 0; --l)
+                    for (; l >= 0; --l)
                     {
                         if (input[l] == ')')
                             commaCache++;
@@ -89,79 +136,13 @@ namespace Day18
                             break;
                     }
 
-                    input = input.Insert(l+1, "(");
-                    input = input.Insert(r+1, ")");
+                    input = input.Insert(l + 1, "(");
+                    input = input.Insert(r + 1, ")");
                     i++;
                 }
             }
             return input;
         }
 
-        static long CalculateString(string input)
-        {
-
-            StringBuilder builder = new StringBuilder();
-            Stack<OperationStack> depth = new Stack<OperationStack>();
-            long cache = 0;
-            Operator currentOperator = Operator.Set;
-            foreach (var c in input)
-            {
-                if (char.IsNumber(c))
-                    builder.Append(c);
-                else if (c == '+')
-                {
-                    PerformOperation(ref cache, builder.ToString(), currentOperator);
-                    currentOperator = Operator.Add;
-                    builder.Clear();
-                }
-                else if (c == '*')
-                {
-                    PerformOperation(ref cache, builder.ToString(), currentOperator);
-                    currentOperator = Operator.Multiply;
-                    builder.Clear();
-                }
-                else if (c == '(')
-                {
-                    depth.Push(new OperationStack { lhs = cache, oper = currentOperator });
-                    currentOperator = Operator.Set;
-                    cache = 0;
-                    builder.Clear();
-                }
-                else if (c == ')')
-                {
-                    PerformOperation(ref cache, builder.ToString(), currentOperator);
-                    var toRestore = depth.Pop();
-                    switch (toRestore.oper)
-                    {
-                        case Operator.Add:
-                            cache = toRestore.lhs + cache;
-                            break;
-                        case Operator.Multiply:
-                            cache = toRestore.lhs * cache;
-                            break;
-                    }
-                    currentOperator = Operator.None;
-                    builder.Clear();
-                }
-            }
-            PerformOperation(ref cache, builder.ToString(), currentOperator);
-            return cache;
-        }
-
-        static void PerformOperation(ref long cache, string currentString, Operator operation)
-        {
-            switch (operation)
-            {
-                case Operator.Set:
-                    cache = long.Parse(currentString);
-                    break;
-                case Operator.Add:
-                    cache += long.Parse(currentString);
-                    break;
-                case Operator.Multiply:
-                    cache *= long.Parse(currentString);
-                    break;
-            }
-        }
     }
 }
