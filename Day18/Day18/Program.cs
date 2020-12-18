@@ -70,9 +70,7 @@ namespace Day18
                                 break;
                         }
                         else if (input[l] == ' ' && commaCache == 0)
-                        {
                             break;
-                        }
                     }
                     //Seek right
                     commaCache = 0;
@@ -88,9 +86,7 @@ namespace Day18
                         else if (input[r] == '(')
                             commaCache++;
                         if (input[r] == ' ' && commaCache == 0)
-                        {
                             break;
-                        }
                     }
 
                     input = input.Insert(l+1, "(");
@@ -114,35 +110,13 @@ namespace Day18
                     builder.Append(c);
                 else if (c == '+')
                 {
-                    switch (currentOperator)
-                    {
-                        case Operator.Set:
-                            cache = long.Parse(builder.ToString());
-                            break;
-                        case Operator.Add:
-                            cache += long.Parse(builder.ToString());
-                            break;
-                        case Operator.Multiply:
-                            cache *= long.Parse(builder.ToString());
-                            break;
-                    }
+                    PerformOperation(ref cache, builder.ToString(), currentOperator);
                     currentOperator = Operator.Add;
                     builder.Clear();
                 }
                 else if (c == '*')
                 {
-                    switch (currentOperator)
-                    {
-                        case Operator.Set:
-                            cache = long.Parse(builder.ToString());
-                            break;
-                        case Operator.Add:
-                            cache += long.Parse(builder.ToString());
-                            break;
-                        case Operator.Multiply:
-                            cache *= long.Parse(builder.ToString());
-                            break;
-                    }
+                    PerformOperation(ref cache, builder.ToString(), currentOperator);
                     currentOperator = Operator.Multiply;
                     builder.Clear();
                 }
@@ -155,18 +129,7 @@ namespace Day18
                 }
                 else if (c == ')')
                 {
-                    switch (currentOperator)
-                    {
-                        case Operator.Set:
-                            cache = long.Parse(builder.ToString());
-                            break;
-                        case Operator.Add:
-                            cache += long.Parse(builder.ToString());
-                            break;
-                        case Operator.Multiply:
-                            cache *= long.Parse(builder.ToString());
-                            break;
-                    }
+                    PerformOperation(ref cache, builder.ToString(), currentOperator);
                     var toRestore = depth.Pop();
                     switch (toRestore.oper)
                     {
@@ -181,19 +144,24 @@ namespace Day18
                     builder.Clear();
                 }
             }
-            switch (currentOperator)
+            PerformOperation(ref cache, builder.ToString(), currentOperator);
+            return cache;
+        }
+
+        static void PerformOperation(ref long cache, string currentString, Operator operation)
+        {
+            switch (operation)
             {
                 case Operator.Set:
-                    cache = long.Parse(builder.ToString());
+                    cache = long.Parse(currentString);
                     break;
                 case Operator.Add:
-                    cache += long.Parse(builder.ToString());
+                    cache += long.Parse(currentString);
                     break;
                 case Operator.Multiply:
-                    cache *= long.Parse(builder.ToString());
+                    cache *= long.Parse(currentString);
                     break;
             }
-            return cache;
         }
     }
 }
