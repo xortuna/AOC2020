@@ -8,7 +8,7 @@ namespace Day19
 {
     class Program
     {
-        class RuleDefiniton
+        class RuleCacheItem
         {
             public string Text;
             public IRule CachedRule = null;
@@ -16,43 +16,19 @@ namespace Day19
 
         interface IRule
         {
-            bool Match(ref int from, string msg);
-        }
-        interface IFunction : IRule
-        {
-            void AddNode(IRule rule);
-            void ReplaceNode(IRule node, IRule newNode);
+            IEnumerable<int> Match(int from, string msg, int recursion);
         }
 
-
-        class StringRule : IRule
-        {
-            public char toMatch;
-            public bool Match(ref int from, string msg)
-            {
-                if (msg.Length <= from)
-                    return false; //OOB
-                return msg[from++].Equals(toMatch);
-            }
-        }
-        class AndRule : IFunction
+        abstract class Function : IRule
         {
             public List<IRule> childRules = new List<IRule>();
-
             public void AddNode(IRule rule)
             {
                 childRules.Add(rule);
             }
 
-            public bool Match(ref int from, string msg)
-            {
-                foreach(var rule in childRules)
-                {
-                    if (!rule.Match(ref from, msg))
-                        return false;
-                }
-                return true;
-            }
+            public abstract IEnumerable<int> Match(int from, string msg, int recursion);
+
             public void ReplaceNode(IRule node, IRule newNode)
             {
                 for (int i = 0; i < childRules.Count; ++i)
@@ -63,48 +39,72 @@ namespace Day19
             }
         }
 
-        class OrRule : IFunction
+        class StringRule : IRule
         {
-            public List<IRule> childRules = new List<IRule>();
-
-            public void AddNode(IRule rule)
+            public char toMatch;
+            public IEnumerable<int> Match(int from, string msg, int recursion)
             {
-                childRules.Add(rule);
-            }
-            public bool Match(ref int from, string msg)
-            {
-                int temp = from;
-                if(childRules[0].Match(ref temp, msg))
+                if (msg.Length > from && (msg[from].Equals(toMatch)))
                 {
-                    from = temp;
-                    return true;
+                    return new List<int> { from + 1 };
                 }
-                else if(childRules[1].Match(ref from, msg))
-                    return true;
-
-                return false;
+                return Enumerable.Empty<int>(); //OOB
             }
+        }
 
-            public void ReplaceNode(IRule node, IRule newNode)
+        class AndRule : Function
+        {
+            public override IEnumerable<int> Match(int from, string msg, int recursion)
             {
-                for(int i=0; i < childRules.Count; ++i)
+                IEnumerable<int> toTest = new List<int> { from };
+                foreach(var rule in childRules)
                 {
-                    if (childRules[i] == node)
-                        childRules[i] = newNode;
+                    bool matching = false;
+                    foreach (var t in toTest)
+                    {
+                        var res = rule.Match(t, msg, recursion);
+                        if (res.Any())
+                        {
+                            matching = true;
+                            toTest = res;
+                            break;
+                        }
+                    }
+                    if (!matching)
+                        return Enumerable.Empty<int>();
                 }
+                return toTest;
+            }
+            
+        }
+
+        class OrRule : Function
+        {
+            public override IEnumerable<int> Match(int from, string msg, int recursion)
+            {
+                if (recursion < 0)
+                    return Enumerable.Empty<int>();
+
+                IEnumerable<int> combinationMatches = new List<int>();
+
+                // we actually have to go down both branches because the position in string the may be different per match, which may affect our parent rules
+                combinationMatches = combinationMatches.Concat(childRules[0].Match(from, msg, recursion-1));
+                combinationMatches = combinationMatches.Concat(childRules[1].Match(from, msg, recursion-1));
+                
+                return combinationMatches;
             }
         }
 
         static void Main(string[] args)
         {
-            Dictionary<int, RuleDefiniton> ruleParse = new Dictionary<int, RuleDefiniton>();
+            Dictionary<int, RuleCacheItem> ruleParse = new Dictionary<int, RuleCacheItem>();
             List<string> toCheck = new List<string>();
             foreach(var line in  System.IO.File.ReadLines("puzzleinput.txt"))
             {
                 if (line.Contains(':'))
                 {
                     var c = line.Split(':');
-                    ruleParse.Add(int.Parse(c[0]), new RuleDefiniton { Text = c[1].Substring(1) });
+                    ruleParse.Add(int.Parse(c[0]), new RuleCacheItem { Text = c[1].Substring(1) });
                 }
                 else if(!string.IsNullOrEmpty(line))
                 {
@@ -117,73 +117,61 @@ namespace Day19
             var currentNode = ruleParse[0];
             currentNode.CachedRule = CompileNodeForRule(currentNode.Text, ruleParse);
 
-            int SuccessCount = 0;
-            foreach(var line in toCheck)
-            {
-                int ptr = 0;
-                if(currentNode.CachedRule.Match(ref ptr, line) && ptr == line.Length)
-                    SuccessCount++;
-            }
-
+            int SuccessCount = toCheck.Count(line => currentNode.CachedRule.Match(0, line, 100).Any(t=>t == line.Length));
             Console.WriteLine($"Part 1: {SuccessCount}");
 
+            //Disgusting hack to replace nodes 8 and 11:
 
-            var toDelete1 = ruleParse[8].CachedRule;
+            var oldEight = ruleParse[8].CachedRule;
+
             //Update rule 8
             ruleParse[8].CachedRule = new OrRule();
             //LHS
             var lhs = new AndRule();
-            ((IFunction)lhs).AddNode(ruleParse[42].CachedRule);
+                lhs.AddNode(ruleParse[42].CachedRule);
             //RHS
             var rhs = new AndRule();
                 rhs.AddNode(ruleParse[42].CachedRule);
                 rhs.AddNode(ruleParse[8].CachedRule);
 
-            ((IFunction)ruleParse[8].CachedRule).AddNode(lhs);
-            ((IFunction)ruleParse[8].CachedRule).AddNode(rhs);
+            ((Function)ruleParse[8].CachedRule).AddNode(lhs);
+            ((Function)ruleParse[8].CachedRule).AddNode(rhs);
 
             //Update rule 11
-
-            var toDelete2 = ruleParse[11].CachedRule;
+            var oldEleven = ruleParse[11].CachedRule;
             ruleParse[11].CachedRule = new OrRule();
             //LHS
             lhs = new AndRule();
-            ((IFunction)lhs).AddNode(ruleParse[42].CachedRule);
-            ((IFunction)lhs).AddNode(ruleParse[31].CachedRule);
+                lhs.AddNode(ruleParse[42].CachedRule);
+                lhs.AddNode(ruleParse[31].CachedRule);
             //RHS
             rhs = new AndRule();
                 rhs.AddNode(ruleParse[42].CachedRule);
                 rhs.AddNode(ruleParse[11].CachedRule);
                 rhs.AddNode(ruleParse[31].CachedRule);
 
-            ((IFunction)ruleParse[11].CachedRule).AddNode(lhs);
-            ((IFunction)ruleParse[11].CachedRule).AddNode(rhs);
+            ((Function)ruleParse[11].CachedRule).AddNode(lhs);
+            ((Function)ruleParse[11].CachedRule).AddNode(rhs);
 
+            //Replace the old 8's and 11's with the new ones
             foreach(var node in ruleParse.Values)
             {
-                if(typeof(IFunction).IsAssignableFrom(node.CachedRule.GetType()))
+                if(typeof(Function).IsAssignableFrom(node.CachedRule.GetType()))
                 {
-                    ((IFunction)node.CachedRule).ReplaceNode(toDelete1, ((IFunction)ruleParse[8].CachedRule));
-                    ((IFunction)node.CachedRule).ReplaceNode(toDelete2, ((IFunction)ruleParse[11].CachedRule));
+                    ((Function)node.CachedRule).ReplaceNode(oldEight, ruleParse[8].CachedRule);
+                    ((Function)node.CachedRule).ReplaceNode(oldEleven, ruleParse[11].CachedRule);
                 }
             }
 
-            SuccessCount = 0;
-            foreach (var line in toCheck)
-            {
-                int ptr = 0;
-                if (currentNode.CachedRule.Match(ref ptr, line) && ptr == line.Length)
-                    SuccessCount++;
-
-            }
+            SuccessCount = toCheck.Count(line => currentNode.CachedRule.Match(0, line, 100).Any(t => t == line.Length));
             Console.WriteLine($"Part 2: {SuccessCount}");
             Console.ReadLine();
 
         }
 
-        static IRule CompileNodeForRule(string ruletext, Dictionary<int, RuleDefiniton> ruleSet)
+        static IRule CompileNodeForRule(string ruletext, Dictionary<int, RuleCacheItem> ruleSet)
         {
-            IFunction Head, BuildingRule;
+            Function Head, BuildingRule;
             Head = BuildingRule = new AndRule();
 
             foreach (var item in ruletext.Split(' '))
