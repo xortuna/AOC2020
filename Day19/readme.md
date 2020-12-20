@@ -15,4 +15,4 @@ AAB
 
 My logic would match "a" on the LHS of rule 1, this would return true, but the RHS of rule 1 would not be checked, so "aa" was never vistied.
 
-By outputting all posibilties of OR's in rule 1, rule 0 could then use both A and AA, allowing it to match AAB
+By outputting all posibilties of OR's in rule 1, rule 0 could then use both A and AA, allowing it to match AAB. Unfortuatly there are infinate possibilities of rule 1, so a recursion limit of 100 was set to solve these puzzles.
