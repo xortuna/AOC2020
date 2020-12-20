@@ -210,7 +210,7 @@ namespace Day20
 
                 var monster = GenerateMonster();
 
-                for (int r = 0; r < 6; ++r)
+                for (int r = 0; r < 8; ++r)
                 {
                     bool foundSomething = false;
                     bool[,] touched = new bool[Image.Count, Image[0].Length];
