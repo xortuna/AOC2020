@@ -29,18 +29,17 @@ namespace Day21
                     Stack<IngredentAllergenPair> ingredentsResolved = new Stack<IngredentAllergenPair>();
                     foreach(var allergen in allergens)
                     {
-                        if (AllergenIngredents.ContainsKey(allergen))
+                        if (AllergenIngredents.ContainsKey(allergen)) //reductive filter
                         {
-                            //reductive filter
-                            AllergenIngredents[allergen] = AllergenIngredents[allergen].Intersect(ingredents).ToList();
-                            if(AllergenIngredents[allergen].Count() == 1)
+                            AllergenIngredents[allergen] = AllergenIngredents[allergen].Intersect(ingredents).ToList();  
+                            if (AllergenIngredents[allergen].Count() == 1)
                                 ingredentsResolved.Push(new IngredentAllergenPair { Allergen = allergen, Ingredent = AllergenIngredents[allergen].First() });
                         }
-                        else //Add all ingredients we know about and arn't already solved
+                        else //Construct using ingredients that are not solved
                             AllergenIngredents.Add(allergen, ingredents.Where(i=> !AllergenIngredents.Values.Any(a=> a.Count == 1 && a.Contains(i))).ToList());
                     }
 
-                    while(ingredentsResolved.Any())
+                    while(ingredentsResolved.Any()) //Need to remove found ingredents from all other filters
                     {
                         var pop = ingredentsResolved.Pop();
                         foreach(var allergen in AllergenIngredents.Where(a => a.Key != pop.Allergen))
@@ -51,14 +50,13 @@ namespace Day21
                     }
                 }
             }
-            Debug.Assert(AllergenIngredents.All(t => t.Value.Count() == 1), "Could not solve all ingredents");
+            Debug.Assert(AllergenIngredents.All(t => t.Value.Count() == 1), "Could not solve all ingredients");
 
             int total = 0;
-            var ingredentsThatHaveAllergents = AllergenIngredents.Select(t => t.Value.First()).ToList();
             foreach (var line in File.ReadAllLines("puzzleinput.txt"))
             {
                 string ingredentSection = line.Substring(0, line.IndexOf('(') == -1 ? line.Length: line.IndexOf('(')).Trim();
-                total += ingredentSection.Split(' ').Count(t => !ingredentsThatHaveAllergents.Contains(t));
+                total += ingredentSection.Split(' ').Count(i => !AllergenIngredents.Values.Any(a=>a.Contains(i)));
             }
 
             Console.WriteLine($"Part 1: {total}");
